@@ -133,7 +133,7 @@ def run_processing_job(processing_instacne_type = "ml.t3.large", processing_inst
                                  sagemaker_session = sagemaker_Sess)
     # Running the processing job
     processor.run("data_preparation.py", processing_inputs, processing_outputs, logs=True,\
-                  arguments=["--max-len", str(100),
+                  arguments=["--max-len", str(max_len),
                              "--train-size", str(train_size),
                              "--validation-size", str(validation_size),
                              "--test-size", str(test_size)])
