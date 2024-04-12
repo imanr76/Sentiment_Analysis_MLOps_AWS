@@ -3,8 +3,8 @@
 import os
 import argparse
 os.system('pip install nltk')
-os.system('pip install torch  --index-url https://download.pytorch.org/whl/cpu')
-os.system('pip install torchtext')
+os.system('pip install torch==1.13.0')
+os.system('pip install torchtext==0.14.0')
 import torch
 import pandas as pd
 from sklearn.model_selection import train_test_split

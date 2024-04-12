@@ -122,7 +122,7 @@ def run_processing_job(processing_instacne_type = "ml.t3.large", processing_inst
                                            s3_upload_mode='EndOfJob'),
                           ProcessingOutput(output_name = "vocabulary",\
                                            source = '/opt/ml/processing/models/',\
-                                           destination = "s3://" + bucket + "/models/",\
+                                           destination = "s3://" + bucket + "/models/vocabulary",\
                                            s3_upload_mode='EndOfJob')]
     # Defining the processing job 
     processor = SKLearnProcessor(framework_version = "0.23-1",role = role,\
