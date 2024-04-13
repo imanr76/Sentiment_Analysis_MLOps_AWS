@@ -1,26 +1,28 @@
+# import logging
+# import sys
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
+# logger.addHandler(logging.StreamHandler(sys.stdout))
+
+
 import logging
 import sys
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 import json
+import nltk
 import torch
 from torch import nn
-import os 
-os.system('pip install nltk')
-os.system('pip install torchtext==0.14.0')
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 import re
-import nltk
 nltk.download("punkt")
 nltk.download('wordnet')
-vocabulary = torch.load(os.environ['SM_MODEL_DIR'] + "/vocabulary.pth")
 
 
-with open(os.environ['SM_MODEL_DIR'] + "/model_info.json") as file:
-    model_info = json.load(file)
 
 def cleanup_text(text):
     """
@@ -139,48 +141,61 @@ class sentiment(nn.Module):
     
 
 def model_fn(model_dir):
-    model_name = "LSTM model-24_04_12-23_03_48.pth"
+    vocabulary = torch.load(model_dir + "/vocabulary.pth")
+
+    with open(model_dir+ "/model_info.json") as file:
+        model_info = json.load(file)
     
-    # model_params = torch.load(model_dir + "/" + model_name)
+    model_name = "model.pth"
+    
+    model_params = torch.load(model_dir + "/" + model_name)
     
     # Size of the embedding vector for each token
-    embed_dim = int(model_info.embed_dim)
+    embed_dim = int(model_info['embed_dim'])
     # Size of the lstm output
-    lstm_size = int(model_info.lstm_size)
+    lstm_size = int(model_info["lstm_size"])
     # Whether to run a bidirectional LSTM
-    bidirectional = bool(model_info.bidirectional)
+    bidirectional = bool(model_info["bidirectional"])
     # Number of LSTM layers
-    num_layers = int(model_info.num_layers)
+    num_layers = int(model_info["num_layers"])
     
-    vocab_len = int(model_info.vocab_len)
+    model = sentiment(len(vocabulary), embed_dim, lstm_size, bidirectional, num_layers)
     
-    model = sentiment(vocab_len, embed_dim, lstm_size, bidirectional, num_layers)
+    model.load_state_dict(model_params)
     
-    # model.load_state_dict(model_params)
+    return (vocabulary, model_info, model)
+
+def predict_fn(input_data, model):
+    print("Predicting")
+    vocabulary, model_info, model = model
     
     model.eval()
     
-    return model
-
-def predict_fn(input_data, model):
+    review_processed = process_reviews(input_data, word_tokenize, WordNetLemmatizer(), vocabulary, len(vocabulary))
     
-    # prediction = torch.where(model.sigmoid(model(torch.tensor(review_processed).reshape(1, -1))) >= threshold, torch.tensor(1), torch.tensor(0))
-    # if prediction == 1:
-    #     predictions.append("Positive")
-    # else:
-    #     predictions.append("Negative")
-    print("predict_fn")
+    threshold = float(model_info["threshold"])
     
-    return "str(input_data)"
+    with torch.no_grad():
+        prediction = torch.where(model.sigmoid(model(torch.tensor(review_processed).reshape(1, -1))) >= threshold, torch.tensor(1), torch.tensor(0))
+        print("Predicted")
+        if prediction == 1:
+            return "Positive"
+        else:
+            return "Negative"
 
 def input_fn(serialized_input_data, content_type='application/jsonlines'): 
-    
-    # review = json.loads(serialized_input_data)['inputs']
-    print("input_fn")
-    # review_processed = process_reviews(review, word_tokenize, WordNetLemmatizer(), vocabulary, model_info["max_len"] - 1)
-
-    return "review"
+    print("read input data")
+    input_data = json.loads(serialized_input_data)
+    return input_data["input_text"]
 
 def output_fn(prediction_output, content_type):
-    print("output_fn")
     return json.dumps(prediction_output)
+
+# from sagemaker.serializers import JSONSerializer
+# serializer = JSONSerializer()
+# serialized_output = serializer.serialize(data = {"input_text": "I love it"})
+# inputs = input_fn(serialized_output)
+# outputs = model_fn("/Users/imanrahgozarabadi/Desktop/model")
+# out = predict_fn(inputs, outputs)
+# output_fn(out, "content_type")
+

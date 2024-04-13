@@ -1,39 +1,24 @@
-# from sagemaker.serializers import JSONSerializer
-# from sagemaker.deserializers import JSONDeserializer
-
-
-
-# # Create a JSONDeserializer
-# deserializer = JSONDeserializer()
-
-# # Example output JSON data
-# output_json = {"prediction": [0.1, 0.2, 0.3, 0.4, 0.5]}
-
-# # Deserialize the output JSON data
-# serializer = JSONSerializer(content_type='application/json')
-# serialized_output = serializer.serialize(data = output_json)
-# # Deserialize the output JSON data
-# deserializer = JSONDeserializer()
-# deserialized_output = deserializer.deserialize(serialized_output, content_type = "application/json")
-# print(deserialized_output)
-
 import requests
 import json
 from requests_aws4auth import AWS4Auth  # Ensure you have this library installed
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+aws_access_key = os.getenv("AWS_PUBLIC_KEY")
+aws_secret_key = os.getenv("AWS_PRIVATE_KEY")
+aws_region = os.getenv("AWS_REGION")
 
 
-# Assuming endpoint_url is the URL of your deployed model endpoint
-endpoint_url = "https://runtime.sagemaker.ca-central-1.amazonaws.com/endpoints/pytorch-inference-2024-04-12-23-59-03-711/invocations"
+endpoint_name = "pytorch-inference-2024-04-13-18-40-11-251"
+
+endpoint_url="https://runtime.sagemaker.ca-central-1.amazonaws.com/endpoints/" + endpoint_name + "/invocations"
 
 # Example input data
-input_data = {"inputs": "input data"}  # Example input JSON data
+input_data = {"input_text": "I love it"}  # Example input JSON data
 
 # Convert input data to JSON string
 input_json = json.dumps(input_data)
-
-
-
-
 
 # Create AWS authentication object
 auth = AWS4Auth(aws_access_key, aws_secret_key, aws_region, "sagemaker")

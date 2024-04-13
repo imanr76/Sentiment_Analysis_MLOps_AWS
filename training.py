@@ -9,8 +9,9 @@ import time
 from datetime import datetime
 os.system('pip install torchtext==0.14.0')
 # import torchtext
-
-
+import json
+import matplotlib.pyplot as plt
+import textwrap
 #------------------------------------------------------------------------------
 # Function Definitions
 
@@ -24,7 +25,7 @@ class sentiment(nn.Module):
         # Saving necessary parameters
         self.num_layers = num_layers
         self.bidirectional = bidirectional
-        
+        self.training_info = []
         # Embedding layer. Expects indices between 0 and vocab_len and generates vectors of embed_dim 
         # for each index. Also assigns 0 to the padding index vector.
         # Input of shape (batch_size, sequence_len)
@@ -82,6 +83,7 @@ class sentiment(nn.Module):
         -------
         None
         """
+
         # Saving and defining the required parameters and variables
         self.loss_func = loss_func
         num_samples = len(train_dataloader.dataset)
@@ -124,26 +126,30 @@ class sentiment(nn.Module):
             loss_validation_list.append(loss_validatoion)
             accuracy_validation_list.append(accuracy_validation * 100)
             
-            print(f"epoch : {epoch + 1}, training loss : {epoch_loss/len(train_dataloader):.4f}, training accuracy : {correct_sentiments/num_samples * 100:.1f}")
-            print(f"epoch : {epoch + 1}, validation loss : {loss_validatoion:.4f}, validation accuracy : {accuracy_validation * 100:.1f}")
-            print()
+            self.training_info.append(textwrap.dedent(f"""
+                                                 epoch : {epoch + 1}, training loss : {epoch_loss/len(train_dataloader):.4f}, training accuracy : {correct_sentiments/num_samples * 100:.1f}
+                                                 epoch : {epoch + 1}, validation loss : {loss_validatoion:.4f}, validation accuracy : {accuracy_validation * 100:.1f}
+                                                 """))
+
          
         # Plotting the training and validation accuracy and loss during the model training
-        # plt.figure()
-        # plt.plot(range(1, epochs + 1), loss_train_list, label = "training loss")
-        # plt.plot(range(1, epochs + 1), loss_validation_list, label = "validation loss")
-        # plt.legend()
-        # plt.xlabel("epochs")
-        # plt.ylabel("loss")
-        # plt.title("Train and Validation Loss per Epoch")
+        plt.figure()
+        plt.plot(range(1, epochs + 1), loss_train_list, label = "training loss")
+        plt.plot(range(1, epochs + 1), loss_validation_list, label = "validation loss")
+        plt.legend()
+        plt.xlabel("epochs")
+        plt.ylabel("loss")
+        plt.title("Train and Validation Loss per Epoch")
+        plt.savefig(args.data_output_dir + "/Train_Validation_Loss.png")
         
-        # plt.figure()
-        # plt.plot(range(1, epochs + 1), accuracy_train_list, label = "training accuracy")
-        # plt.plot(range(1, epochs + 1), accuracy_validation_list, label = "validatoin accuracy")
-        # plt.legend()
-        # plt.xlabel("epochs")
-        # plt.ylabel("accuracy")
-        # plt.title("Train and Validation Accuracy per Epoch")
+        plt.figure()
+        plt.plot(range(1, epochs + 1), accuracy_train_list, label = "training accuracy")
+        plt.plot(range(1, epochs + 1), accuracy_validation_list, label = "validatoin accuracy")
+        plt.legend()
+        plt.xlabel("epochs")
+        plt.ylabel("accuracy")
+        plt.title("Train and Validation Accuracy per Epoch")
+        plt.savefig(args.data_output_dir + "/Train_Validation_Accuracy.png")
         
     def evaluate(self, test_dataset, threshold):
         """
@@ -166,7 +172,7 @@ class sentiment(nn.Module):
             accuracy = torch.sum(predictions_arg == test_dataset[:, -1]).item() / len(test_dataset) * 100
             loss = self.loss_func(predictions, test_dataset[:, -1].to(torch.float)).item()
             report = classification_report(test_dataset[:, -1], predictions_arg, output_dict=True, zero_division=0)
-            print(f"test set loss : {loss:.4}, test set accuracy : {accuracy:.1f}")
+            self.training_info.append(f"test set loss : {loss:.4}, test set accuracy : {accuracy:.1f}")
         return report 
 
 
@@ -238,10 +244,11 @@ def train_model(args, embed_dim = 20, lstm_size = 20, bidirectional = True,\
     
     # Setting the device to GPU if available
     device = set_to_gpu()
-    print("Downloading the vocabulary")
+    
     # Reading the vocabulary 
     vocabulary = torch.load(args.vocabulary_dir + "/vocabulary.pth")
-    print("Downloading the data")
+    torch.save(vocabulary, args.model_dir + "/vocabulary.pth")
+
     # Reading the train, test and validation datasets
     training_dataset = torch.load(args.train_data_dir + "/training_dataset.pth")
     validation_dataset = torch.load(args.validation_data_dir + "/validation_dataset.pth")
@@ -259,16 +266,22 @@ def train_model(args, embed_dim = 20, lstm_size = 20, bidirectional = True,\
     
     # Measuring the elapsed time and reporting it
     elapsed_time = time.time() - start_time
-    print(f"\nTime it took to train the model: {elapsed_time:.1f}s\n")
+    model.training_info.append(f"\nTime it took to train the model: {elapsed_time:.1f}s\n")
     
     #Evaluating the model using the test set and saving the classification report
     model.to("cpu")
     report = model.evaluate(test_dataset, threshold)
     
+    with open(args.data_output_dir + "/classification_report.json", "w") as file:
+        json.dump(report, file)
+    
+    with open(args.data_output_dir + "/training_info.txt", "w") as file:
+        file.write("\n".join(model.training_info))
+    
     # Saving the model
-    now = datetime.now()
-    model_name = args.model_dir + "/LSTM model-" + now.strftime("%y_%m_%d-%H_%M_%S")
-    torch.save(model, model_name + '.pth')
+    # now = datetime.now()
+    # model_name = args.model_dir + "/LSTM model-" + now.strftime("%y_%m_%d-%H_%M_%S")
+    torch.save(model.state_dict(), args.model_dir + '/model.pth')
     
     return report, model
 
@@ -329,6 +342,9 @@ if __name__ == "__main__":
     epochs = int(args.epochs)
     # Setting the threshold for positive and negative labels
     threshold = float(args.threshold)
+    
+    with open(args.model_dir + "/model_info.json", "w") as file:
+        json.dump(vars(args), file) 
     
     report, model = train_model(args, embed_dim, lstm_size, bidirectional, num_layers, dropout, learning_rate, epochs, threshold)
     

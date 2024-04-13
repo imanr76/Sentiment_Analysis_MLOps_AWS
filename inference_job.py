@@ -55,10 +55,12 @@ if __name__ == "__main__":
     model = PyTorchModel(
         entry_point="inference.py",
         role=role,
-        model_data = "s3://sagemaker-ca-central-1-397567358266/models/pytorch-training-2024-04-12-20-10-24-217/output/model.tar.gz",
+        model_data = "s3://sagemaker-ca-central-1-397567358266/models/pytorch-training-2024-04-13-18-27-00-682/output/model.tar.gz",
         framework_version = "1.13",
         py_version = "py39",
-        sagemaker_session = sagemaker_Sess
+        sagemaker_session = sagemaker_Sess,
+        source_dir = "./src",
+        env = {"PYTHONUNBUFFERED" : "1"}
     )
     
     
@@ -69,7 +71,4 @@ if __name__ == "__main__":
                             deserializer = JSONDeserializer(),
                             logs = True
                             )
-    
-    
-    
     
