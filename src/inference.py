@@ -1,10 +1,3 @@
-# import logging
-# import sys
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.DEBUG)
-# logger.addHandler(logging.StreamHandler(sys.stdout))
-
-
 import logging
 import sys
 
@@ -13,15 +6,15 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 import json
-import nltk
+import os
 import torch
 from torch import nn
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 import re
+import nltk
 nltk.download("punkt")
 nltk.download('wordnet')
-
 
 
 def cleanup_text(text):
@@ -166,7 +159,7 @@ def model_fn(model_dir):
     return (vocabulary, model_info, model)
 
 def predict_fn(input_data, model):
-    print("Predicting")
+
     vocabulary, model_info, model = model
     
     model.eval()
@@ -177,25 +170,17 @@ def predict_fn(input_data, model):
     
     with torch.no_grad():
         prediction = torch.where(model.sigmoid(model(torch.tensor(review_processed).reshape(1, -1))) >= threshold, torch.tensor(1), torch.tensor(0))
-        print("Predicted")
+
         if prediction == 1:
             return "Positive"
         else:
             return "Negative"
 
 def input_fn(serialized_input_data, content_type='application/jsonlines'): 
-    print("read input data")
+
     input_data = json.loads(serialized_input_data)
     return input_data["input_text"]
 
 def output_fn(prediction_output, content_type):
     return json.dumps(prediction_output)
-
-# from sagemaker.serializers import JSONSerializer
-# serializer = JSONSerializer()
-# serialized_output = serializer.serialize(data = {"input_text": "I love it"})
-# inputs = input_fn(serialized_output)
-# outputs = model_fn("/Users/imanrahgozarabadi/Desktop/model")
-# out = predict_fn(inputs, outputs)
-# output_fn(out, "content_type")
 

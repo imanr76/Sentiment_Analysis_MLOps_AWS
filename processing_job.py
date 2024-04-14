@@ -127,12 +127,11 @@ def run_processing_job(processing_instacne_type = "ml.t3.large", processing_inst
     # Defining the processing job 
     processor = SKLearnProcessor(framework_version = "0.23-1",role = role,\
                                  instance_type = processing_instacne_type,\
-                                 base_job_name = "test-job2",
                                  instance_count =1,
                                  env={'AWS_DEFAULT_REGION': region},
                                  sagemaker_session = sagemaker_Sess)
     # Running the processing job
-    processor.run("data_preparation.py", processing_inputs, processing_outputs, logs=True,\
+    processor.run("./src/data_preparation.py", processing_inputs, processing_outputs, logs=True,\
                   arguments=["--max-len", str(max_len),
                              "--train-size", str(train_size),
                              "--validation-size", str(validation_size),

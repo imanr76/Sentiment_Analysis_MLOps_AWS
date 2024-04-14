@@ -10,12 +10,12 @@ aws_secret_key = os.getenv("AWS_PRIVATE_KEY")
 aws_region = os.getenv("AWS_REGION")
 
 
-endpoint_name = "pytorch-inference-2024-04-13-18-40-11-251"
+endpoint_name = "pytorch-inference-2024-04-13-19-54-46-785"
 
 endpoint_url="https://runtime.sagemaker.ca-central-1.amazonaws.com/endpoints/" + endpoint_name + "/invocations"
 
 # Example input data
-input_data = {"input_text": "I love it"}  # Example input JSON data
+input_data = {"input_text": "I love love love love love love love"}  # Example input JSON data
 
 # Convert input data to JSON string
 input_json = json.dumps(input_data)
