@@ -71,8 +71,9 @@ def copy_to_S3(boto3_session, bucket, region):
                          MetadataDirective='REPLACE')
    
 
-def run_processing_job(processing_instacne_type = "ml.t3.large", processing_instance_count = 1,\
-                       max_len = 500, train_size = 0.8, validation_size = 0.15, test_size = 0.05, local = True):
+def run_processing_job(session_info = None, processing_instacne_type = "ml.t3.large", 
+                       processing_instance_count = 1, max_len = 500, train_size = 0.8, 
+                       validation_size = 0.15, test_size = 0.05, local = True):
     """
     Sets up the sagemaker session, prepares the data and runs a processing job using the 
     data_preparation.py script.
@@ -99,8 +100,11 @@ def run_processing_job(processing_instacne_type = "ml.t3.large", processing_inst
     None.
 
     """
-    # Setting up the sagemaker session
-    role, bucket, region, boto3_session, sagemaker_Sess = setup_sagemaker(local)
+    if not session_info:
+        # Setting up the sagemaker session
+        role, bucket, region, boto3_session, sagemaker_Sess = setup_sagemaker(local)
+    else:
+        role, bucket, region, boto3_session, sagemaker_Sess = session_info
     # Preparing the raw data
     copy_to_S3(boto3_session, bucket, region)
     # Defining the processing job inputs

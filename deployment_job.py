@@ -45,17 +45,19 @@ def setup_sagemaker(local = True):
     return role, bucket, region, boto3_session, sagemaker_Sess
 
 
-
-#------------------------------------------------------------------------------
-# Running the script directly
-if __name__ == "__main__":
-
-    role, bucket, region, boto3_session, sagemaker_Sess = setup_sagemaker()
+def run_deployment_job(training_job_name, deployment_instance_count = 1, deployment_instance_type = "ml.t2.medium",
+                       session_info = None):
+    if not session_info:
+        role, bucket, region, boto3_session, sagemaker_Sess = setup_sagemaker()
+    else:
+        role, bucket, region, boto3_session, sagemaker_Sess = session_info
+    
+    model_data = "s3://" + bucket +"/models/" + training_job_name + "/output/model.tar.gz"
     
     model = PyTorchModel(
-        entry_point="inference.py",
+        entry_point="deployment.py",
         role=role,
-        model_data = "s3://sagemaker-ca-central-1-397567358266/models/pytorch-training-2024-04-13-18-27-00-682/output/model.tar.gz",
+        model_data = model_data,
         framework_version = "1.13",
         py_version = "py39",
         sagemaker_session = sagemaker_Sess,
@@ -65,10 +67,23 @@ if __name__ == "__main__":
     
     
     predictor = model.deploy(
-                            initial_instance_count = 1,
-                            instance_type = "ml.t2.medium",
+                            initial_instance_count = deployment_instance_count,
+                            instance_type = deployment_instance_type,
                             serializer = JSONSerializer(),
                             deserializer = JSONDeserializer(),
                             logs = True
                             )
+    return predictor.endpoint_name
+
+
+#------------------------------------------------------------------------------
+# Running the script directly
+if __name__ == "__main__":
     
+    deployment_instance_count = 1
+    
+    deployment_instance_type = "ml.t2.medium"
+    
+    training_job_name = 'pytorch-training-2024-04-15-04-41-52-653'
+    
+    run_deployment_job(training_job_name, deployment_instance_count, deployment_instance_type)

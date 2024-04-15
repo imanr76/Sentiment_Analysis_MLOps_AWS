@@ -206,7 +206,7 @@ def set_to_gpu():
 
 def train_model(args, embed_dim = 20, lstm_size = 20, bidirectional = True,\
                 num_layers = 1, dropout = 0, learning_rate = 0.001,\
-                epochs = 100, threshold = 0.5):
+                epochs = 100, threshold = 0.5, batch_size = 64):
     """
     Trains an LSTM model using the input parameters. Saves the model. Also evaluates the 
     classification accuracy on the test set and return the classification report
@@ -254,7 +254,7 @@ def train_model(args, embed_dim = 20, lstm_size = 20, bidirectional = True,\
     validation_dataset = torch.load(args.validation_data_dir + "/validation_dataset.pth")
     test_dataset = torch.load(args.test_data_dir + "/test_dataset.pth")
     # Creating a dataloader from he training dtaset for the model training loop
-    train_loader = DataLoader(training_dataset, batch_size = 64, shuffle = True)    
+    train_loader = DataLoader(training_dataset, batch_size = batch_size, shuffle = True)    
     
     # Instansiating the model
     model = sentiment(len(vocabulary), embed_dim, lstm_size, bidirectional, num_layers, dropout).to(device)
@@ -311,6 +311,7 @@ def parse_args():
     parser.add_argument("--learning_rate", default = 0.001)
     parser.add_argument("--epochs", default = 5)
     parser.add_argument("--threshold", default = 0.5)
+    parser.add_argument("--batch_size", default = 32)
     parser.add_argument("--train_data_dir", default = os.environ['SM_CHANNEL_TRAIN'])
     parser.add_argument("--validation_data_dir", default = os.environ['SM_CHANNEL_VALIDATION'])
     parser.add_argument("--test_data_dir", default = os.environ['SM_CHANNEL_TEST'])
@@ -343,10 +344,12 @@ if __name__ == "__main__":
     # Setting the threshold for positive and negative labels
     threshold = float(args.threshold)
     
+    batch_size = int(args.batch_size)
+    
     with open(args.model_dir + "/model_info.json", "w") as file:
         json.dump(vars(args), file) 
     
-    report, model = train_model(args, embed_dim, lstm_size, bidirectional, num_layers, dropout, learning_rate, epochs, threshold)
+    report, model = train_model(args, embed_dim, lstm_size, bidirectional, num_layers, dropout, learning_rate, epochs, threshold, batch_size)
     
 
 
