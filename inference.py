@@ -41,7 +41,7 @@ def make_inference(review, endpoint_name):
 # Running the script directly
 if __name__ == "__main__":
     
-    endpoint_name = "pytorch-inference-2024-04-14-20-02-55-826"
+    endpoint_name = "demo-lambda-deploy-endpoint-2024-04-16-21-22"
     
     review = "I absoloutley love this product, it is amazing, definitely recommend you to buy."
     
