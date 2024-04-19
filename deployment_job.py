@@ -47,6 +47,26 @@ def setup_sagemaker(local = True):
 
 def run_deployment_job(training_job_name, deployment_instance_count = 1, deployment_instance_type = "ml.t2.medium",
                        session_info = None):
+    """
+    
+
+    Parameters
+    ----------
+    training_job_name : str
+        The name of the training job that was used for model training. This is used to find the model artifacts on S3.
+    deployment_instance_count : int, optional
+        The number of VM nodes to use for deployment and inference . The default is 1.
+    deployment_instance_type : str, optional
+        The type of VM to use for deployment and inference . The default is "ml.t2.medium".
+    session_info : obj
+        Information about the boto3 and sagemaker sessions.
+
+    Returns
+    -------
+    ste
+        The name of the deployed endpoint.
+
+    """
     if not session_info:
         role, bucket, region, boto3_session, sagemaker_Sess = setup_sagemaker()
     else:

@@ -279,8 +279,6 @@ def train_model(args, embed_dim = 20, lstm_size = 20, bidirectional = True,\
         file.write("\n".join(model.training_info))
     
     # Saving the model
-    # now = datetime.now()
-    # model_name = args.model_dir + "/LSTM model-" + now.strftime("%y_%m_%d-%H_%M_%S")
     torch.save(model.state_dict(), args.model_dir + '/model.pth')
     
     return report, model
@@ -301,6 +299,15 @@ class dataset(Dataset):
 
 
 def parse_args():
+    """
+    Parses the inputs to the script. 
+
+    Returns
+    -------
+    args : obj
+        Parsed inputs.
+
+    """
     parser = argparse.ArgumentParser(description='processing job')
     
     parser.add_argument("--embed_dim", default = 20)
@@ -343,7 +350,7 @@ if __name__ == "__main__":
     epochs = int(args.epochs)
     # Setting the threshold for positive and negative labels
     threshold = float(args.threshold)
-    
+    # The batch size to use during model training
     batch_size = int(args.batch_size)
     
     with open(args.model_dir + "/model_info.json", "w") as file:
